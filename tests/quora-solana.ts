@@ -80,11 +80,29 @@ describe("quora-solana", () => {
   //   assert.isNull(pda);
   // })
 
-  it("Is answer initialized?", async () => {
-    // let questions = await provider.connection.getProgramAccounts(program.programId);
-    // console.log(questions);
-    let content = "你到底是想问航母还是宫保鸡丁？";
-    const tx = await program.methods.initializeAnswer(
+  // it("Is answer initialized?", async () => {
+  //   // let questions = await provider.connection.getProgramAccounts(program.programId);
+  //   // console.log(questions);
+  //   let content = "你到底是想问航母还是宫保鸡丁？";
+  //   const tx = await program.methods.initializeAnswer(
+  //     question_account,
+  //     content
+  //   )
+  //     .accounts({
+  //       answerAccount: answer_account,
+  //       answerer: provider.wallet.publicKey,
+  //       systemProgram: anchor.web3.SystemProgram.programId
+  //     })
+  //     .rpc({ commitment: 'confirmed' });
+
+  //   console.log("Answer init signature", tx);
+  //   let fetched_answer_account = await program.account.answerAccount.fetch(answer_account, "confirmed")
+  //   assert.equal(fetched_answer_account.answerContent, content)
+  // });
+
+  it("Is answer updated?", async () => {
+    let content = "造航母的话参考www.baidu.com。宫保鸡丁的话参考www.douyin.com。";
+    const tx = await program.methods.updateAnswer(
       question_account,
       content
     )
@@ -93,10 +111,12 @@ describe("quora-solana", () => {
         answerer: provider.wallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId
       })
-      .rpc({ commitment: 'confirmed' });
+      .rpc({ commitment: "confirmed" })
 
-    console.log("Answer init signature", tx);
-    let fetched_answer_account = await program.account.answerAcount.fetch(answer_account, "confirmed")
+    console.log("Answer update transaction: ", tx);
+
+    let fetched_answer_account = await program.account.answerAccount.fetch(answer_account, "confirmed")
     assert.equal(fetched_answer_account.answerContent, content)
-  });
+
+  })
 });

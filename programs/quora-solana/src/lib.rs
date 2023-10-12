@@ -109,7 +109,7 @@ pub struct InitializeQuestion<'info> {
         payer = initializer,
         space = 8 + 32 + 1 + 4 + title.len() + 4 + content.len()
     )]
-    question_account: Account<'info, QuestionAccount>,
+    pub question_account: Account<'info, QuestionAccount>,
 }
 
 #[derive(Accounts)]
@@ -151,7 +151,7 @@ pub struct InitializeAnswer<'info> {
         payer = answerer,
         space = 8 + 1 + 32 + 4 + content.len() + 1 + 1
     )]
-    answer_account: Account<'info, AnswerAcount>,
+    pub answer_account: Account<'info, AnswerAccount>,
 }
 
 #[derive(Accounts)]
@@ -167,9 +167,9 @@ pub struct UpdateAnswer<'info> {
         realloc = 8 + 1 + 32 + 4 + content.len() + 1 + 1,
         realloc::payer = answerer,
         realloc::zero = true,
-        has_one = answerer @QuoraError::NotInitializer
+        // has_one = answerer @QuoraError::NotInitializer
     )]
-    pub answer_account: Account<'info, AnswerAcount>,
+    pub answer_account: Account<'info, AnswerAccount>,
 }
 
 #[account]
@@ -181,7 +181,7 @@ pub struct QuestionAccount {
 }
 
 #[account]
-pub struct AnswerAcount {
+pub struct AnswerAccount {
     pub is_initialized: bool,
     pub answerer: Pubkey,
     pub answer_content: String,
