@@ -99,6 +99,11 @@ pub mod quora_solana {
 
         Ok(())
     }
+
+    pub fn close_answer(_ctx: Context<CloseAnswer>) -> Result<()> {
+        msg!("关闭回答...");
+        Ok(())
+    }
 }
 
 /*提问题 */
@@ -185,6 +190,14 @@ pub struct UpdateAnswer<'info> {
 pub struct UpvoteAnswer<'info> {
     #[account(mut)]
     pub answer_account: Account<'info, AnswerAccount>,
+}
+
+#[derive(Accounts)]
+pub struct CloseAnswer<'info> {
+    #[account(mut, close = answerer, has_one = answerer @QuoraError::NotInitializer)]
+    pub answer_account: Account<'info, AnswerAccount>,
+    #[account(mut)]
+    pub answerer: Signer<'info>,
 }
 
 #[account]

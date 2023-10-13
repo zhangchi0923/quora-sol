@@ -139,4 +139,16 @@ describe("quora-solana", () => {
     console.log(cur_upvote)
     assert.ok(cur_upvote.eq(prev_upvote.addn(1)))
   })
+
+  it("Is answer closed?", async () => {
+    const tx = await program.methods.closeAnswer()
+      .accounts({
+        answerAccount: answer_account,
+        answerer: provider.wallet.publicKey
+      })
+      .rpc({ commitment: "confirmed" })
+    console.log("Close answer transaction: ", tx)
+    let pda = await provider.connection.getAccountInfo(answer_account, "confirmed");
+    assert.isNull(pda);
+  })
 });
