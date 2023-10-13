@@ -92,10 +92,9 @@ pub mod quora_solana {
             answer_account.is_initialized,
             QuoraError::AnswerNotInitialized
         );
-        let cur_upvote = answer_account.upvote_amount;
-        msg!("当前点赞数：{}", cur_upvote);
+        msg!("当前点赞数：{}", answer_account.upvote_amount);
         msg!("更新点赞数...");
-        answer_account.upvote_amount = cur_upvote.checked_add(1).unwrap();
+        answer_account.upvote_amount = answer_account.upvote_amount.checked_add(1).unwrap();
         msg!("更新后点赞数：{}", answer_account.upvote_amount);
 
         Ok(())
@@ -158,7 +157,7 @@ pub struct InitializeAnswer<'info> {
         seeds = [question_account.key().as_ref(), answerer.key().as_ref()],
         bump,
         payer = answerer,
-        space = 8 + 1 + 32 + 4 + content.len() + 1 + 1
+        space = 8 + 1 + 32 + 4 + content.len() + 8 + 1
     )]
     pub answer_account: Account<'info, AnswerAccount>,
 }
@@ -174,7 +173,7 @@ pub struct UpdateAnswer<'info> {
         mut,
         seeds = [question_account.key().as_ref(), answerer.key().as_ref()],
         bump,
-        realloc = 8 + 1 + 32 + 4 + content.len() + 1 + 1,
+        realloc = 8 + 1 + 32 + 4 + content.len() + 8 + 1,
         realloc::payer = answerer,
         realloc::zero = true,
         has_one = answerer @QuoraError::NotInitializer
@@ -185,7 +184,6 @@ pub struct UpdateAnswer<'info> {
 #[derive(Accounts)]
 pub struct UpvoteAnswer<'info> {
     #[account(mut)]
-    pub upvoter: Signer<'info>,
     pub answer_account: Account<'info, AnswerAccount>,
 }
 
@@ -202,7 +200,7 @@ pub struct AnswerAccount {
     pub is_initialized: bool,
     pub answerer: Pubkey,
     pub answer_content: String,
-    pub upvote_amount: u8,
+    pub upvote_amount: u64,
     pub is_adopted: bool,
 }
 

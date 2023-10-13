@@ -11,10 +11,11 @@ describe("quora-solana", () => {
   const program = anchor.workspace.QuoraSolana as Program<QuoraSolana>;
 
   // question account test
-  let title = "足球怎么踢?";
+  let title = "篮球怎么踢?";
   // let question_account_seed = [Buffer.from(title), provider.wallet.publicKey.toBuffer()] as Buffer[];
   let question_account;
   let answer_account;
+  let prev_upvote;
 
   before(async () => {
     [question_account] = anchor.web3.PublicKey.findProgramAddressSync(
@@ -26,6 +27,9 @@ describe("quora-solana", () => {
       [question_account.toBuffer(), provider.wallet.publicKey.toBuffer()],
       program.programId
     )
+
+    // prev_upvote = (await program.account.answerAccount.fetch(answer_account, "finalized")).upvoteAmount
+    // console.log(prev_upvote)
   });
 
   // it("Is initialized!", async () => {
@@ -121,20 +125,18 @@ describe("quora-solana", () => {
   // })
 
   it("Is upvoted?", async () => {
-    let prev_answer_account = await program.account.answerAccount.fetch(answer_account, "confirmed");
-    let prev_upvote = prev_answer_account.upvoteAmount;
+    prev_upvote = (await program.account.answerAccount.fetch(answer_account, "confirmed")).upvoteAmount
     console.log(prev_upvote)
     const tx = await program.methods.upvoteAnswer()
       .accounts({
         answerAccount: answer_account,
-        upvoter: provider.wallet.publicKey
       })
       .rpc({ commitment: "confirmed" })
 
     console.log("Upvote transaction: ", tx);
-    let cur_answer_account = await program.account.answerAccount.fetch(answer_account, "finalized");
+    let cur_answer_account = await program.account.answerAccount.fetch(answer_account, "confirmed");
     let cur_upvote = cur_answer_account.upvoteAmount
     console.log(cur_upvote)
-    assert.equal(cur_upvote, prev_upvote + 1)
+    assert.ok(cur_upvote.eq(prev_upvote.addn(1)))
   })
 });
