@@ -20,7 +20,7 @@ pub mod quora_solana {
             QuoraError::QuestionAlreadyInitialized
         );
         // 写入数据
-        question_account.raiser = ctx.accounts.initializer.key();
+        question_account.initializer = ctx.accounts.initializer.key();
         question_account.is_initialized = true;
         msg!("Question题目：{}", title);
         question_account.title = title;
@@ -54,11 +54,7 @@ pub mod quora_solana {
         Ok(())
     }
 
-    pub fn initialize_answer(
-        ctx: Context<InitializeAnswer>,
-        _question_account: Pubkey,
-        content: String,
-    ) -> Result<()> {
+    pub fn initialize_answer(ctx: Context<InitializeAnswer>, content: String) -> Result<()> {
         msg!("初始化Answer账户...");
         let answer_account = &mut ctx.accounts.answer_account;
         require!(
@@ -76,11 +72,7 @@ pub mod quora_solana {
         Ok(())
     }
 
-    pub fn update_answer(
-        ctx: Context<UpdateAnswer>,
-        _question_account: Pubkey,
-        content: String,
-    ) -> Result<()> {
+    pub fn update_answer(ctx: Context<UpdateAnswer>, content: String) -> Result<()> {
         msg!("更新Answer内容...");
         let answer_account = &mut ctx.accounts.answer_account;
         require!(
@@ -90,6 +82,21 @@ pub mod quora_solana {
         msg!("Answer内容：{}", answer_account.answer_content);
         msg!("Answer内容更新为：{}", content);
         answer_account.answer_content = content;
+
+        Ok(())
+    }
+
+    pub fn upvote_answer(ctx: Context<UpvoteAnswer>) -> Result<()> {
+        let answer_account = &mut ctx.accounts.answer_account;
+        require!(
+            answer_account.is_initialized,
+            QuoraError::AnswerNotInitialized
+        );
+        let cur_upvote = answer_account.upvote_amount;
+        msg!("当前点赞数：{}", cur_upvote);
+        msg!("更新点赞数...");
+        answer_account.upvote_amount = cur_upvote.checked_add(1).unwrap();
+        msg!("更新后点赞数：{}", answer_account.upvote_amount);
 
         Ok(())
     }
@@ -124,29 +131,31 @@ pub struct UpdateQuestion<'info> {
         bump,
         realloc = 8 + 32 + 1 + 4 + title.len() + 4 + content.len(),
         realloc::payer = initializer,
-        realloc::zero = true
+        realloc::zero = true,
+        has_one = initializer @QuoraError::NotInitializer
     )]
     pub question_account: Account<'info, QuestionAccount>,
 }
 
 #[derive(Accounts)]
 pub struct CloseQuestion<'info> {
-    #[account(mut, close = raiser, has_one = raiser)]
+    #[account(mut, close = initializer, has_one = initializer @QuoraError::NotInitializer)]
     question_account: Account<'info, QuestionAccount>,
     #[account(mut)]
-    pub raiser: Signer<'info>,
+    pub initializer: Signer<'info>,
 }
 
 /*回答问题 */
 #[derive(Accounts)]
-#[instruction(_question_account: Pubkey, content: String)]
+#[instruction(content: String)]
 pub struct InitializeAnswer<'info> {
     #[account(mut)]
     pub answerer: Signer<'info>,
+    pub question_account: Account<'info, QuestionAccount>,
     pub system_program: Program<'info, System>,
     #[account(
         init,
-        seeds = [_question_account.as_ref(), answerer.key().as_ref()],
+        seeds = [question_account.key().as_ref(), answerer.key().as_ref()],
         bump,
         payer = answerer,
         space = 8 + 1 + 32 + 4 + content.len() + 1 + 1
@@ -155,27 +164,35 @@ pub struct InitializeAnswer<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(_question_account: Pubkey, content: String)]
+#[instruction(content: String)]
 pub struct UpdateAnswer<'info> {
     #[account(mut)]
     pub answerer: Signer<'info>,
+    pub question_account: Account<'info, QuestionAccount>,
     pub system_program: Program<'info, System>,
     #[account(
         mut,
-        seeds = [_question_account.as_ref(), answerer.key().as_ref()],
+        seeds = [question_account.key().as_ref(), answerer.key().as_ref()],
         bump,
         realloc = 8 + 1 + 32 + 4 + content.len() + 1 + 1,
         realloc::payer = answerer,
         realloc::zero = true,
-        // has_one = answerer @QuoraError::NotInitializer
+        has_one = answerer @QuoraError::NotInitializer
     )]
+    pub answer_account: Account<'info, AnswerAccount>,
+}
+
+#[derive(Accounts)]
+pub struct UpvoteAnswer<'info> {
+    #[account(mut)]
+    pub upvoter: Signer<'info>,
     pub answer_account: Account<'info, AnswerAccount>,
 }
 
 #[account]
 pub struct QuestionAccount {
     pub is_initialized: bool,
-    pub raiser: Pubkey,
+    pub initializer: Pubkey,
     pub title: String,
     pub content: String,
 }

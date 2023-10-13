@@ -11,7 +11,7 @@ describe("quora-solana", () => {
   const program = anchor.workspace.QuoraSolana as Program<QuoraSolana>;
 
   // question account test
-  let title = "如何烹饪航空母舰?";
+  let title = "足球怎么踢?";
   // let question_account_seed = [Buffer.from(title), provider.wallet.publicKey.toBuffer()] as Buffer[];
   let question_account;
   let answer_account;
@@ -44,7 +44,7 @@ describe("quora-solana", () => {
   //   console.log("Question init signature", tx);
 
   //   let fetched_question_account = await program.account.questionAccount.fetch(question_account, "confirmed");
-  //   assert.ok(fetched_question_account.raiser.equals(provider.wallet.publicKey));
+  //   assert.ok(fetched_question_account.initializer.equals(provider.wallet.publicKey));
   //   assert.ok(fetched_question_account.isInitialized);
   //   assert.ok(fetched_question_account.title === title);
   //   assert.ok(fetched_question_account.content === content);
@@ -72,7 +72,7 @@ describe("quora-solana", () => {
   //   const tx = await program.methods.closeQuestion()
   //     .accounts({
   //       questionAccount: question_account,
-  //       raiser: provider.wallet.publicKey
+  //       initializer: provider.wallet.publicKey
   //     })
   //     .rpc({ commitment: "confirmed" });
   //   console.log("Question close transaction signature: ", tx);
@@ -83,13 +83,13 @@ describe("quora-solana", () => {
   // it("Is answer initialized?", async () => {
   //   // let questions = await provider.connection.getProgramAccounts(program.programId);
   //   // console.log(questions);
-  //   let content = "你到底是想问航母还是宫保鸡丁？";
+  //   let content = "你到底是想问足球还是宫保鸡丁？";
   //   const tx = await program.methods.initializeAnswer(
-  //     question_account,
   //     content
   //   )
   //     .accounts({
   //       answerAccount: answer_account,
+  //       questionAccount: question_account,
   //       answerer: provider.wallet.publicKey,
   //       systemProgram: anchor.web3.SystemProgram.programId
   //     })
@@ -100,23 +100,41 @@ describe("quora-solana", () => {
   //   assert.equal(fetched_answer_account.answerContent, content)
   // });
 
-  it("Is answer updated?", async () => {
-    let content = "造航母的话参考www.baidu.com。宫保鸡丁的话参考www.douyin.com。";
-    const tx = await program.methods.updateAnswer(
-      question_account,
-      content
-    )
+  // it("Is answer updated?", async () => {
+  //   let content = "学日语的话参考www.xindongfang.com。宫保鸡丁的话参考www.douyin.com。";
+  //   const tx = await program.methods.updateAnswer(
+  //     content
+  //   )
+  //     .accounts({
+  //       answerAccount: answer_account,
+  //       questionAccount: question_account,
+  //       answerer: provider.wallet.publicKey,
+  //       systemProgram: anchor.web3.SystemProgram.programId
+  //     })
+  //     .rpc({ commitment: "confirmed" })
+
+  //   console.log("Answer update transaction: ", tx);
+
+  //   let fetched_answer_account = await program.account.answerAccount.fetch(answer_account, "confirmed")
+  //   assert.equal(fetched_answer_account.answerContent, content)
+
+  // })
+
+  it("Is upvoted?", async () => {
+    let prev_answer_account = await program.account.answerAccount.fetch(answer_account, "confirmed");
+    let prev_upvote = prev_answer_account.upvoteAmount;
+    console.log(prev_upvote)
+    const tx = await program.methods.upvoteAnswer()
       .accounts({
         answerAccount: answer_account,
-        answerer: provider.wallet.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId
+        upvoter: provider.wallet.publicKey
       })
       .rpc({ commitment: "confirmed" })
 
-    console.log("Answer update transaction: ", tx);
-
-    let fetched_answer_account = await program.account.answerAccount.fetch(answer_account, "confirmed")
-    assert.equal(fetched_answer_account.answerContent, content)
-
+    console.log("Upvote transaction: ", tx);
+    let cur_answer_account = await program.account.answerAccount.fetch(answer_account, "finalized");
+    let cur_upvote = cur_answer_account.upvoteAmount
+    console.log(cur_upvote)
+    assert.equal(cur_upvote, prev_upvote + 1)
   })
 });
