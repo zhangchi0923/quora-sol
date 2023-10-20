@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-
+use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 declare_id!("9n8Y27TNBMzh83osNpmXX3accbQiUcHCQbvvunzzb5p9");
 
 #[program]
@@ -198,6 +198,16 @@ pub struct CloseAnswer<'info> {
     pub answer_account: Account<'info, AnswerAccount>,
     #[account(mut)]
     pub answerer: Signer<'info>,
+}
+
+/*spl token */
+#[derive(Accounts)]
+pub struct TransferSpl<'info> {
+    pub from: Signer<'info>,
+    #[account(mut)]
+    pub from_ata: Account<'info, TokenAccount>,
+    pub to_ata: Account<'info, TokenAccount>,
+    pub token_program: Program<'info, Token>,
 }
 
 #[account]

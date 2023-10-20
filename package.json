@@ -4,7 +4,10 @@
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
     },
     "dependencies": {
-        "@coral-xyz/anchor": "^0.28.0"
+        "@coral-xyz/anchor": "^0.28.0",
+        "@emotion/react": "^11.11.1",
+        "@emotion/styled": "^11.11.0",
+        "@mui/material": "^5.14.14"
     },
     "devDependencies": {
         "@types/bn.js": "^5.1.0",
